@@ -6,3 +6,6 @@ ALL: $(OUT)
 
 $(OUT): 
 	$(KC) $(SRC) -include-runtime -d $(OUT)
+
+clean:
+	rm -f $(OUT)

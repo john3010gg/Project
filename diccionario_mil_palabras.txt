@@ -1,3 +1,9 @@
+el
+la
+ellos
+ellas
+los
+les
 casa
 perro
 gato

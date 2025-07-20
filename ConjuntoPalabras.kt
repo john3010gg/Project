@@ -22,7 +22,6 @@ class ConjuntoPalabras {
         tamaño++
     }
 
-
     /*
         Procedimiento que recibe un parametro p tipo String, y que lo elimina de la tabla. La precondicon es
         que p debe pertenecer a la tabla, y la postcondicion que luego del procedimiento, la palabra p ya no
@@ -121,64 +120,4 @@ class ConjuntoPalabras {
         }
         return arreglo
     }
-}
-
-/*
-    Funcion que recibe un parametro string de tipo String, y que retorna un valor Booleano.
-    Si para todo caracter perteneciente a la String, estos pertenecen al alfabeto espanol, entonces se retorna
-    true, si al menos hay uno que no pertenece al alfabeto en espanol, retorna false
-*/
-fun esPalabraValida(string: String): Boolean{
-    for (ch in string){
-        if (!(ch in 'a'..'z' || ch == 'ñ')){
-            return false
-        }
-    }
-    return true
-}
-
-/*
-    implementacion del algoritmo de Damerau–Levenshtein para hallar la distancia enter dos palabras
-*/
-fun damerauLevenshteinDistance(a: String, b: String): Int {
-    val maxdist = a.length + b.length
-    val d = Array(a.length + 2) { IntArray(b.length + 2) }
-    val da = mutableMapOf<Char, Int>()
-
-    for (c in (a + b)) {
-        da[c] = 0
-    }
-
-    d[0][0] = maxdist
-    for (i in 0..a.length) {
-        d[i + 1][0] = maxdist
-        d[i + 1][1] = i
-    }
-    for (j in 0..b.length) {
-        d[0][j + 1] = maxdist
-        d[1][j + 1] = j
-    }
-
-    for (i in 1..a.length) {
-        var db = 0
-        for (j in 1..b.length) {
-            val i1 = da.getOrDefault(b[j - 1], 0)
-            val j1 = db
-            val cost = if (a[i - 1] == b[j - 1]) {
-                db = j
-                0
-            } else {
-                1
-            }
-            d[i + 1][j + 1] = minOf(
-                d[i][j] + cost,
-                d[i + 1][j] + 1,
-                d[i][j + 1] + 1,
-                d[i1][j1] + (i - i1 - 1) + 1 + (j - j1 - 1)
-            )
-        }
-        da[a[i - 1]] = i
-    }
-
-    return d[a.length + 1][b.length + 1]
 }

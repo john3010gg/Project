@@ -1,4 +1,4 @@
-class PMLI{
+class PMLI {
     var letra: Char? = null
     var conjuntoPalabras: ConjuntoPalabras? = null
 
@@ -12,25 +12,18 @@ class PMLI{
         conjuntoPalabras = ConjuntoPalabras()
     }
 
-
     /*
         Precondicion: palabra[0] = letra
         Postcondicion: ConjuntoPalabras = ConjuntoPalabras U {palabra}
         Procedimiento que recibe un parametro de entrada tipo STRING que se almacena en el ConjuntoPalabras
      */
     fun agregarPalabra(palabra: String) {
-        if (palabra[0] != letra){
+        if (palabra.isEmpty() || palabra[0] != letra || !esPalabraValida(palabra)) {
             println("La palabra '$palabra' no es válida o no comienza con la letra '$letra'.")
-            return
-        }
-
-        if (!esPalabraValida(palabra)) {
-            println("La palabra '$palabra' no es válida.")
             return
         }
         conjuntoPalabras!!.agregar(palabra)
     }
-
 
     /*
         Precondicion: palabra[0] = letra
@@ -38,8 +31,8 @@ class PMLI{
         Procedimiento que recibe un parametro de entrada tipo STRING que se elimna del ConjuntoPalabras
     */
     fun eliminarPalabra(palabra: String) {
-        if (!esPalabraValida(palabra)) {
-            println("La palabra '$palabra' no es válida.")
+        if (palabra.isEmpty() || palabra[0] != letra || !esPalabraValida(palabra)) {
+            println("La palabra '$palabra' no es válida o no comienza con la letra '$letra'.")
             return
         }
         conjuntoPalabras!!.eliminar(palabra)
@@ -50,7 +43,7 @@ class PMLI{
         Postcondicion: Imprimir por la salida estandar los elementos del ConjuntoPalabras
         Procedimiento que imprime por la salida estandar los elementos del conjunto
     */
-    fun mostrarPalabras(){
+    fun mostrarPalabras() {
         conjuntoPalabras!!.mostrar()
     }
 
@@ -61,9 +54,13 @@ class PMLI{
         y que devuelve True o False
     */
     fun buscarPalabra(palabra: String): Boolean {
+        if (palabra.isEmpty() || palabra[0] != letra) {
+            println("Error: La palabra '$palabra' no comienza con la letra '$letra'.")
+            return false
+        }
         return conjuntoPalabras!!.pertenece(palabra)
     }
-    
+
     fun devolverPalabras(): Array<String> {
         return conjuntoPalabras!!.palabrasEnConjunto()
     }

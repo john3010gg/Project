@@ -50,10 +50,11 @@ fun main() {
                     println("Error: Debe crear primero el ayudante ortográfico (opción 1).")
                 } else {
                     println("Ingrese la ruta del texto a corregir")
-                    val line = scanner.nextLine()
-                    val resultado = ayudante.corregirTexto(line.toString())
-                    println("Sugerencias de corrección:")
-                    println(resultado)
+                    val finput = scanner.nextLine().trim()
+                    println("Ingrese la ruta del archivo de salida")
+                    val foutput = scanner.nextLine().trim()
+                    ayudante.corregirTexto(finput, foutput)
+                    println("Texto corregido. Resultados guardados en '$foutput'.")
                 }
             }
             "5" -> {
@@ -61,6 +62,7 @@ fun main() {
                     println("Error: Debe crear primero el ayudante ortográfico (opción 1).")
                 } else {
                     println("Diccionario actual:")
+                    ayudante.imprimirDiccionario()
                 }
             }
             "6" -> {

@@ -1,7 +1,7 @@
 import java.io.File
 class AyudanteOrtografico {
 
-    private val alfabeto = "abcdefghijklmnopqrstuvwxyz"
+    private val alfabeto = "abcdefghijklmnopqrstuvwxyzñ"
     private val dicc = Array(27) {PMLI()}
 
     /*
@@ -10,8 +10,8 @@ class AyudanteOrtografico {
         contiene un PMLI con una letra del alfabeto espanol
     */
     fun crearAyudante(){
-        for (letra in alfabeto) {
-            dicc[letra - 'a'].crearPMLI(letra)
+        for (i in alfabeto.indices) {
+            dicc[i].crearPMLI(alfabeto[i])
         }
     }
 
@@ -36,13 +36,12 @@ class AyudanteOrtografico {
             }
             if (esPalabraValida(line)) {
                 val letra = line[0]
-                dicc[letra - 'a']?.agregarPalabra(line)
+                dicc[letraToIndice(letra)]?.agregarPalabra(line)
             } else {
                 println("La palabra '$line' no es válida.")
             }
         }
     }
-
 
     /*
         Precondicion: el parametro palabra debe ser una palabra valida
@@ -50,24 +49,30 @@ class AyudanteOrtografico {
         Procedimiento que recibe un parametro Palabra de tipo String, que elimina la misma del dicc
     */
     fun borrarPalabra(palabra: String) {
-        if (!palabraValida(palabra)){
+        if (!esPalabraValida(palabra)){
             println("Error: la palabra ${palabra} no es una palabra valida")
             return
         }
-        if (dicc[palabra[0] - 'a'].buscarPalabra(palabra)) {
-            val letra = palabra[0]
-            dicc[letra - 'a']?.eliminarPalabra(palabra)
+        val idx = letraToIndice(palabra[0])
+        if (dicc[idx].buscarPalabra(palabra)) {
+            dicc[idx].eliminarPalabra(palabra)
             println("Palabra '$palabra' eliminada del diccionario.")
         } else {
             println("La palabra '$palabra' no existe en el diccionario.")
         }
     }
 
-    
-    fun corregirTexto(fileName: String): String {
-        val file = File(fileName)
+    /*
+        Precondicion: finput es un archivo de texto valido
+        Postcondicion: Imprime en el archivo foutput cada una de las palabras validas contenidas
+        en el archivo finput que no se encuentren en dicc, seguidas de las cuatro palabras
+        con menor distancia.
+    */
+    fun corregirTexto(finput: String, foutput: String) {
+        val file = File(finput)
         if (!file.exists()) {
-            return "El archivo no existe."
+            println("El archivo no existe.")
+            return
         }
         val lines = file.readLines()
         val palabras = extraerTexto(lines)
@@ -75,44 +80,55 @@ class AyudanteOrtografico {
 
         for (palabra in palabras) {
             if (!esPalabraValida(palabra) || palabra.isEmpty()) continue
-            val idx = palabra[0] - 'a'
-            if (palabra.isNotEmpty() && palabra[0] in 'a'..'z') {
-                val idx = palabra[0] - 'a'
-                if (!dicc[idx].buscarPalabra(palabra)) {
-                    val sugerencias = dicc[idx].devolverPalabras()
-                        .map { Pair(it, damerauLevenshteinDistance(palabra, it)) }
-                        .sortedBy { it.second }
-                        .take(4)
-                        .map { it.first }
+            val idx = letraToIndice(palabra[0])
+            if (!dicc[idx].buscarPalabra(palabra)) {
+                val sugerencias = mutableListOf<Pair<String, Int>>()
+                for (pml in dicc) {
+                    pml.devolverPalabras().forEach { p ->
+                        sugerencias.add(Pair(p, damerauLevenshteinDistance(palabra, p)))
+                    }
+                }
+                val mejores = sugerencias.sortedBy { it.second }.take(4).map { it.first }
+                resultado.append("Palabra desconocida: '$palabra'\n")
+                if (mejores.isEmpty()) {
+                    resultado.append("Sugerencias: No se encontraron sugerencias\n\n")
+                } else {
+                    resultado.append("Sugerencias: ${mejores.joinToString(", ")}\n\n")
+                }
+            }
+        }
+        File(foutput).writeText(resultado.toString())
+    }
 
-                    resultado.append("Palabra desconocida: '$palabra'\n")
-                    if (sugerencias.isEmpty()) {
-                        resultado.append("Sugerencias: No se encontraron sugerencias\n\n")
-                    } else {
-                        resultado.append("Sugerencias: ${sugerencias.joinToString(", ")}\n\n")
+    /*
+        Precondicion: True
+        Postcondicion: Imprime dicc por la salida estandar mostrando las palabras en orden lexicografico
+    */
+    fun imprimirDiccionario() {
+        for (pml in dicc) {
+            println("Palabras con letra inicial '${pml.letra}':")
+            pml.mostrarPalabras()
+        }
+    }
+
+    private fun letraToIndice(letra: Char): Int {
+        return if (letra == 'ñ') 26 else letra - 'a'
+    }
+
+    private fun extraerTexto(text: List<String>): List<String> {
+        val palabras = mutableListOf<String>()
+        for (line in text) {
+            val words = line.split(Regex("\\s+"))
+            for (word in words) {
+                if (word.isNotEmpty()) {
+                    val cleanWord = word.trim().trimEnd('.', ',', ';', ':', '!', '?').lowercase()
+                    if (cleanWord.isNotEmpty()) {
+                        palabras.add(cleanWord)
                     }
                 }
             }
         }
-
-        return resultado.toString()
-    }
-    
-
-    private fun extraerTexto(text: List<String>): List<String> {
-    val palabras = mutableListOf<String>()
-    for (line in text) {
-        val words = line.split(Regex("\\s+"))
-        for (word in words) {
-            if (word.isNotEmpty()) {
-                val cleanWord = word.trim().trimEnd('.', ',', ';', ':', '!', '?').lowercase()
-                if (cleanWord.isNotEmpty()) {
-                    palabras.add(cleanWord)
-                }
-            }
-        }
-    }
-    return palabras
+        return palabras
     }
 
     private fun verificarSignos(word: String): Boolean {
@@ -125,4 +141,64 @@ class AyudanteOrtografico {
             return false
         }
     }
+}
+
+/*
+    Funcion que recibe un parametro string de tipo String, y que retorna un valor Booleano.
+    Si para todo caracter perteneciente a la String, estos pertenecen al alfabeto espanol, entonces se retorna
+    true, si al menos hay uno que no pertenece al alfabeto en espanol, retorna false
+*/
+fun esPalabraValida(string: String): Boolean {
+    for (ch in string) {
+        if (!(ch in 'a'..'z' || ch == 'ñ')) {
+            return false
+        }
+    }
+    return true
+}
+
+/*
+    implementacion del algoritmo de Damerau–Levenshtein para hallar la distancia enter dos palabras
+*/
+fun damerauLevenshteinDistance(a: String, b: String): Int {
+    val maxdist = a.length + b.length
+    val d = Array(a.length + 2) { IntArray(b.length + 2) }
+    val da = mutableMapOf<Char, Int>()
+
+    for (c in (a + b)) {
+        da[c] = 0
+    }
+
+    d[0][0] = maxdist
+    for (i in 0..a.length) {
+        d[i + 1][0] = maxdist
+        d[i + 1][1] = i
+    }
+    for (j in 0..b.length) {
+        d[0][j + 1] = maxdist
+        d[1][j + 1] = j
+    }
+
+    for (i in 1..a.length) {
+        var db = 0
+        for (j in 1..b.length) {
+            val i1 = da.getOrDefault(b[j - 1], 0)
+            val j1 = db
+            val cost = if (a[i - 1] == b[j - 1]) {
+                db = j
+                0
+            } else {
+                1
+            }
+            d[i + 1][j + 1] = minOf(
+                d[i][j] + cost,
+                d[i + 1][j] + 1,
+                d[i][j + 1] + 1,
+                d[i1][j1] + (i - i1 - 1) + 1 + (j - j1 - 1)
+            )
+        }
+        da[a[i - 1]] = i
+    }
+
+    return d[a.length + 1][b.length + 1]
 }
